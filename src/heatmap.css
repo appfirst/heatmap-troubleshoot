@@ -1,0 +1,128 @@
+table {
+	border-collapse: separate;
+	border-spacing: 0px;
+}
+
+#tiles {
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	outline: 0px;
+}
+
+#tiles th {
+	/* vertical-align: top; */
+	padding: 0px;
+	color: #ccc;
+}
+
+#tiles td {
+	padding: 0px;
+}
+
+#tiles tr {
+	padding: 0px;
+}
+
+#tiles .tile {
+	background-color: #000000;
+/* 	width: 40px;
+	height: 40px; */
+	/* -webkit-border-radius: 6px; */
+	/* position: relative; */
+	padding: 0px;
+/* 	-webkit-transform-style: preserve-3d;
+	-webkit-transition: 0.7s; */
+}
+
+#mainDiv {
+	overflow: hidden;
+}
+
+#bellsnwhistles {
+	float: left;
+	border: 1px solid black;
+	padding: 20px;
+}
+
+#appcontainer {
+	border: 1px solid black;
+	overflow: hidden;
+}
+
+#bellsnwhistles  .threshold_slider {
+	width:110px;
+	margin-top:5px;
+	float:left;
+	position:relative;
+	/* line-height:10px; */
+	margin-top:5px;
+	display:block;
+}
+
+.hoverable {
+	stroke-width: 1;
+	stroke: gray;
+/* 	width: 40px;
+	height: 45px; */
+}
+
+.hoverable:hover {
+	fill-opacity: .8;
+	/* transition-property: fill-opacity, stroke-width, stroke; */
+	/* transition-duration: .5s */
+	stroke-width: 3;
+	stroke: black;
+}
+
+.notdefined {
+/* 	width: 40px;
+	height: 40px; */
+	fill: #FFFFFF;
+}
+
+/* 10 buckets green to red */
+
+.q1 {
+	fill: #00FF00;
+}
+
+.q2 {
+	fill: #40FF00;
+}
+
+.q3 {
+	fill: #80FF00;
+}
+
+.q4 {
+	fill: #BFFF00;
+}
+
+.q5 {
+	fill: #FFFF00;
+}
+
+.q6 {
+	fill: #FFBF00;
+}
+
+.q7 {
+	fill: #FF8000;
+}
+
+.q8 {
+	fill: #FF8000;
+}
+
+.q9 {
+	fill: #FF4000;
+}
+
+.q10 {
+	fill: #FF0000;
+}
+
+.q11 {
+	fill: #9E0142;
+}
