@@ -73,6 +73,7 @@ svg {
 	min-height: 400px;
 	max-height: 400px;
 	background: #DDDDDD;
+	padding: 30px;
 }
 
 .hoverable {

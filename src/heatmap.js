@@ -251,15 +251,14 @@ function createTiles(s) {
 				else {
 					return "notdefined"
 				}
-			})
-		callback();
+			});
 	}
 	
 	var addDirtyNumbers = function(callback) {
 		d3.select("#bellsnwhistles").append("div").attr("id", "dirtyNumbers");
 		callback();
 	}
-	queue(1)
+	queue()
 		.defer(createSlider)
 		.defer(adjustColors)
 		.defer(addDirtyNumbers);
