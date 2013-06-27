@@ -1,38 +1,5 @@
-table {
-	border-collapse: separate;
-	border-spacing: 0px;
-}
-
-#tiles {
-	margin: 0px;
-	padding: 0px;
-	border: 0px;
-	outline: 0px;
-}
-
-#tiles th {
-	/* vertical-align: top; */
-	padding: 0px;
-	color: #ccc;
-}
-
-#tiles td {
-	padding: 0px;
-}
-
-#tiles tr {
-	padding: 0px;
-}
-
-#tiles .tile {
-	background-color: #000000;
-/* 	width: 40px;
-	height: 40px; */
-	/* -webkit-border-radius: 6px; */
-	/* position: relative; */
-	padding: 0px;
-/* 	-webkit-transform-style: preserve-3d;
-	-webkit-transition: 0.7s; */
+body {
+	background: #EEEEEE;
 }
 
 #mainDiv {
@@ -41,23 +8,71 @@ table {
 
 #bellsnwhistles {
 	float: left;
-	border: 1px solid black;
 	padding: 20px;
 }
 
+#bellsnwhistles .slider_title {
+	text-align: center;
+	min-width: 200px
+}
+
+#bellsnwhistles .slider_value {
+	overflow: hidden;
+}
+
 #appcontainer {
-	border: 1px solid black;
 	overflow: hidden;
 }
 
 #bellsnwhistles  .threshold_slider {
+	float: left;
 	width:110px;
-	margin-top:5px;
-	float:left;
 	position:relative;
-	/* line-height:10px; */
-	margin-top:5px;
+	/* margin-top:5px; */
 	display:block;
+	/* height:100%; */
+	height: 5px;
+	border-radius:7px;
+	box-shadow:inset 0 1px 0 #F9D7C5;
+	position:relative;
+	/* z-index:1; */
+	overflow:visible !important;
+}
+
+.ui-slider-handle {
+	border-radius:15px;
+	/* background-image: none !important; */
+	/* background: #FF4000 !important; */
+	border:5px solid #444444;
+	width:13px !important;
+	height:13px !important;
+	box-shadow:0 0 1px #555;
+	position:absolute;
+	right:0;
+	/* top:-5px; */
+}
+	
+svg { 
+	overflow: hidden; /*IE10*/
+}
+
+#back {
+	font-family: sans-serif;
+	font-size: 12px;
+	text-anchor: middle;
+	fill: black;
+	font-weight: bold;
+}
+
+#dirtyNumbers {
+	border: 1px solid black;
+	max-width: 200px;
+	min-width: 200px;
+	/* white-space: nowrap; */
+	/* overflow:scroll; */
+	min-height: 400px;
+	max-height: 400px;
+	background: #DDDDDD;
 }
 
 .hoverable {
@@ -78,6 +93,8 @@ table {
 .notdefined {
 /* 	width: 40px;
 	height: 40px; */
+	stroke-width: 1;
+	stroke: gray;
 	fill: #FFFFFF;
 }
 
