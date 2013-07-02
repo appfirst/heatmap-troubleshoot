@@ -8,7 +8,7 @@ body {
 
 #bellsnwhistles {
 	float: left;
-	padding: 20px;
+	padding: 30px;
 }
 
 #bellsnwhistles .slider_title {
@@ -16,44 +16,61 @@ body {
 	min-width: 200px
 }
 
-#bellsnwhistles .slider_value {
+#bellsnwhistles #slider_value {
 	overflow: hidden;
+	position: relative;
+	text-align: center;
+	left: 8px;
+	width: 60px;
+	border: 1px solid black;
+	background: #ffffff
+}
+
+.combolabel {
+	float: left;
+	padding-left: 20px;
+	padding-right: 10px;
+}
+
+.combobox {
+	padding-bottom: 10px;
 }
 
 #appcontainer {
 	overflow: hidden;
 }
 
+#threshold_slider {
+	padding-bottom: 10px;
+}
+
 #bellsnwhistles  .threshold_slider {
 	float: left;
 	width:110px;
 	position:relative;
-	/* margin-top:5px; */
+	top: 6px;
+	left: 0px;
 	display:block;
-	/* height:100%; */
 	height: 5px;
 	border-radius:7px;
 	box-shadow:inset 0 1px 0 #F9D7C5;
 	position:relative;
-	/* z-index:1; */
+	padding-left: 15px;
 	overflow:visible !important;
 }
 
 .ui-slider-handle {
 	border-radius:15px;
-	/* background-image: none !important; */
-	/* background: #FF4000 !important; */
 	border:5px solid #444444;
 	width:13px !important;
 	height:13px !important;
 	box-shadow:0 0 1px #555;
 	position:absolute;
-	right:0;
-	/* top:-5px; */
 }
 	
 svg { 
 	overflow: hidden; /*IE10*/
+	cursor: default;
 }
 
 #back {
@@ -68,78 +85,117 @@ svg {
 	border: 1px solid black;
 	max-width: 200px;
 	min-width: 200px;
-	/* white-space: nowrap; */
-	/* overflow:scroll; */
 	min-height: 400px;
 	max-height: 400px;
+	text-align: center;
 	background: #DDDDDD;
 }
 
 .hoverable {
 	stroke-width: 1;
 	stroke: gray;
-/* 	width: 40px;
-	height: 45px; */
 }
 
 .hoverable:hover {
 	fill-opacity: .8;
-	/* transition-property: fill-opacity, stroke-width, stroke; */
-	/* transition-duration: .5s */
-	stroke-width: 3;
+	stroke-width: 1;
 	stroke: black;
 }
 
 .notdefined {
-/* 	width: 40px;
-	height: 40px; */
 	stroke-width: 1;
 	stroke: gray;
 	fill: #FFFFFF;
 }
 
-/* 10 buckets green to red */
+.backbutton:hover {
+	opacity: .8;
+}
 
-.q1 {
+/* 10 buckets beige to blue for processes */
+
+.p1 {
+	fill: #BFEFFF
+}
+
+.p2 {
+	fill: #99E5FF
+}
+
+.p3 {
+	fill: #73DCFF
+}
+
+.p4 {
+	fill: #4CD2FF
+}
+
+.p5 {
+	fill: #26C9FF
+}
+
+.p6 {
+	fill: #00BFFF
+}
+
+.p7 {
+	fill: #00A3D9
+}
+
+.p8 {
+	fill: #0086B3
+}
+
+.p9 {
+	fill: #00698C
+}
+
+.p10 {
+	fill: #004D66
+}
+
+/* 10 buckets green to red for heatmap */
+
+.h1 {
 	fill: #00FF00;
 }
 
-.q2 {
+.h2 {
 	fill: #40FF00;
 }
 
-.q3 {
+.h3 {
 	fill: #80FF00;
 }
 
-.q4 {
+.h4 {
 	fill: #BFFF00;
 }
 
-.q5 {
+.h5 {
 	fill: #FFFF00;
 }
 
-.q6 {
+.h6 {
 	fill: #FFBF00;
 }
 
-.q7 {
+.h7 {
 	fill: #FF8000;
 }
 
-.q8 {
+.h8 {
 	fill: #FF8000;
 }
 
-.q9 {
+.h9 {
 	fill: #FF4000;
 }
 
-.q10 {
+.h10 {
 	fill: #FF0000;
 }
 
-.q11 {
+.h11 {
 	fill: #9E0142;
 }
