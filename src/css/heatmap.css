@@ -2,7 +2,22 @@ body {
 	background: #EEEEEE;
 }
 
+#header{
+	width: 900px;
+	margin-left: auto ;
+	margin-right: auto ;
+	background-color: #777777;
+	color: white;
+	font-size: 30px;
+	text-align: center;
+	padding: 10px;
+}
+
 #mainDiv {
+	width: 900px;
+	margin-left: auto ;
+	margin-right: auto ;
+	padding: 10px;
 	overflow: hidden;
 }
 
@@ -81,13 +96,23 @@ svg {
 	font-weight: bold;
 }
 
+#details {
+	
+}
+
 #dirtyNumbers {
+	font-family: "Courier New";
+	font-size: 12px;
+	overflow: hidden;
+	white-space: nowrap;
+	padding-top: 10px;
+	padding-left: 15px;
 	border: 1px solid black;
 	max-width: 200px;
 	min-width: 200px;
-	min-height: 400px;
-	max-height: 400px;
-	text-align: center;
+	min-height: 200px;
+	max-height: 200px;
+	text-align: left;
 	background: #DDDDDD;
 }
 
@@ -185,7 +210,7 @@ svg {
 }
 
 .h8 {
-	fill: #FF8000;
+	fill: #FF5C26;
 }
 
 .h9 {
@@ -194,8 +219,4 @@ svg {
 
 .h10 {
 	fill: #FF0000;
-}
-
-.h11 {
-	fill: #9E0142;
 }

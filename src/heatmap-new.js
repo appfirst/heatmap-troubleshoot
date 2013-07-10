@@ -9,25 +9,25 @@ d3.selection.prototype.moveToFront = function() {
 function filterServers() {
 	var options = d3.select(".combobox").select("form").select("select").selectAll("option")[0]
 	var rects = d3.select("#tiles").selectAll("*");
-	if(combobox.selection.selectedIndex != 0) {
-		if(options[combobox.selection.selectedIndex] == options[1]) { //avg_resp_time
-			var sorted = rects.sort(respSort);
-		}
-		else if(options[combobox.selection.selectedIndex] == options[2]) { //name
-			var sorted = rects.sort(nameSort);
-		}
-		sorted[0].forEach(function(e, i) {
-			d3.select(e).transition().duration(1000).attr("x", 40 * (i % columns) )
-				.attr("y", Math.floor(i / columns) * 40 )
-		});
+	if(options[combobox.selection.selectedIndex] == options[0]) { //name
+		var sorted = rects.sort(nameSort);
 	}
+	else if(options[combobox.selection.selectedIndex] == options[1]) { //cpu
+		var sorted = rects.sort(cpuSort);
+	}
+	
+	sorted[0].forEach(function(e, i) {
+		d3.select(e).transition().duration(1000)
+			.attr("x", 40 * (i % columns) )
+			.attr("y", Math.floor(i / columns) * 40 )
+	});
 	
 	
 	function nameSort(a, b) {
-		if(a.topo.id.toLowerCase() < b.topo.id.toLowerCase()) {
+		if(a.toLowerCase() < b.toLowerCase()) {
 			return -1;
 		}
-		else if(a.topo.id.toLowerCase() == b.topo.id.toLowerCase()) {
+		else if(a.toLowerCase() == b.toLowerCase()) {
 			return 0;
 		}
 		else {
@@ -35,26 +35,15 @@ function filterServers() {
 		}
 	}
 	
-	function respSort(a, b) {
-		if(isNaN(Number(a.topo.resp_avg)) && isNaN(Number(b.topo.resp_avg))) {
-			return 0;
-		}
-		else if(isNaN(Number(a.topo.resp_avg))) {
-			return 1;
-		}
-		else if(isNaN(Number(b.topo.resp_avg))) {
+	function cpuSort(a, b) {
+		if(Number(servers[a].cpu) < Number(servers[b].cpu)) {
 			return -1;
 		}
+		else if(Number(servers[a].cpu) == Number(servers[b].cpu)) {
+			return 0;
+		}
 		else {
-			if(Number(a.topo.resp_avg) < Number(b.topo.resp_avg)) {
-				return -1;
-			}
-			else if(Number(a.topo.resp_avg) == Number(b.topo.resp_avg)) {
-				return 0;
-			}
-			else {
-				return 1;
-			}
+			return 1;
 		}
 	}
 }
@@ -64,6 +53,8 @@ var columns = 15;
 var rows = 10;
 var buckets = 11;
 var layer = 1;
+var servers = {};
+var collectorIDs = {};
 
 var getFile = function(url, callback) {
 	$.ajax({
@@ -81,13 +72,10 @@ var getFile = function(url, callback) {
 }
 
 queue()
-	.defer(d3.json, "/topology.json")
-	.defer(d3.json, "/servers.json")
-	// .defer(getFile, "http://localhost:9000/api/v3/topology/")
-	// .defer(getFile, "http://localhost:9000/api/v3/servers/")
+	.defer(getFile, "http://localhost:9000/api/v1/metrics/?name=sys.server.\*.\*")
 	.awaitAll(function(error, data) {
 		if(typeof error == null) { console.log(error); return; }
-		createHeatMap(data[0], data[1])
+		createHeatMap(data)
 	})
 	
 			
@@ -111,9 +99,9 @@ function loadedMore(l) {
 
 function mover(d) {
 	var details = d3.select("#details");
-	details.append("div").text("Name: " + d.server.nickname)
-	details.append("div").text("Avg Response: " + d.topo.resp_avg);
-	details.append
+	details.append("div").text("Name: " + d)
+	details.append("div").text("CPU Usage: " + servers[d].cpu + "%");
+	// details.append
 }
 function mout() {
 	d3.select("#details").selectAll("*").remove();
@@ -226,7 +214,7 @@ function click(i, d) {
 	d3.select(".combobox").select("form").select("select").attr("disabled", true);
 	zoomIn(d3.select(d), i);
 	// loadedMore(50);
-	processes(9869);
+	processes(collectorIDs[d3.select(d)[0][0].__data__]);
 	d3.select(d).attr("class", function() {
 		var re = d3.select(d).attr("class");
 		re = re.replace("hoverable", "");
@@ -290,24 +278,63 @@ function zoomOut() {
 		});
 }
 	
-function createHeatMap(topology, servers) {
-	serverstuff = []
-	topology.Node.forEach(function(toposerver) {
-		if(toposerver.id == "External") {
-				serverstuff.push( {topo:toposerver, server:{ nickname:"External" } } )
+function createHeatMap(data) {
+
+	function parseServerData() {
+	
+		// console.log(Object.keys(data[0]["data"]));
+		eval(data[0]["collectors"]).forEach( function(d) {
+			collectorIDs[d[0]] = d[1];
+		});
+		var collectors = {};
+		for(var c in data[0]["request"]["collectors"]) {
+			collectors[data[0]["request"]["collectors"][c]] = {};
 		}
-		else {
-			servers.forEach(function(server) {
-				if(toposerver.id == server.nickname) {
-					serverstuff.push( {topo:toposerver, server:server} );
+		
+		Object.keys(data[0]["data"]).forEach( function(d) {
+			var s = d.replace("sys.server.", "");
+			var temp = s;
+			// console.log(d);
+			var server = "";
+			
+			while(temp !== "" && temp.indexOf(".") != -1 && Object.keys(collectors).indexOf(server) == -1) {
+				if(server !== "") {
+					server = server + ".";
 				}
-			})
-		}
-	})
-	createTiles(serverstuff);
+				var i = temp.indexOf(".") + 1;
+				var t = temp.substring(0, i);
+				server = server + t;
+				server = server.substring(0, server.length - 1)
+				temp = temp.replace(t, "");
+			}
+			// console.log(data[0]["data"][Object.keys(data[0]["data"])[i]][0]["value"]);
+			// console.log(temp);
+			// console.log(data[0]["data"][d][0]["value"]);
+			collectors[server][temp] = data[0]["data"][d][0]["value"];
+		})
+		return collectors;
+	}
+	
+	servers = parseServerData();
+
+	// serverstuff = []
+	// topology.Node.forEach(function(toposerver) {
+		// if(toposerver.id == "External") {
+				// serverstuff.push( {topo:toposerver, server:{ nickname:"External" } } )
+		// }
+		// else {
+			// servers.forEach(function(server) {
+				// if(toposerver.id == server.nickname) {
+					// serverstuff.push( {topo:toposerver, server:server} );
+				// }
+			// })
+		// }
+	// })
+	createTiles();
 }
 
-function createTiles(s) {
+function createTiles() {
+	var keys = Object.keys(servers);
 	var oldx, oldy, thisRect;
 
 	d3.select("body").select("#mainDiv")	
@@ -323,7 +350,7 @@ function createTiles(s) {
 	d3.select("body").select("#mainDiv").select("svg")
 		.append("g").attr("id", "tiles")
 		.selectAll("rect")
-		.data(s)
+		.data(keys)
 		.enter()
 		.append("rect")
 		.attr("x", function(d, i) {
@@ -357,41 +384,31 @@ function createTiles(s) {
 				adjustColors(ui.value);
 				d3.select("#slider_value").text( function() {
 					var value = $(".threshold_slider").slider("option", "value");
-					if(value / 1000000 < 1) {
-						return Math.floor(value / 1000) + " ms"
-					}
-					else {
-						return Math.floor(value / 10000) / 100 + " s";
-					}
+					return value / 10 + "%";
 				});
 			  },
 			  change: function( event, ui ) { 
 				adjustColors(ui.value);
 				d3.select("#slider_value").text( function() {
 					var value = $(".threshold_slider").slider("option", "value");
-					if(value / 1000000 < 1) {
-						return Math.floor(value / 1000) + " ms"
-					}
-					else {
-						return Math.floor(value / 10000) / 100 + " s";
-					}
+					return value / 10 + "%";
 				});
 			  },
-			  step: 10000,
+			  step: 1,
 			  min: 0,
-			  max: 2000000,
-			  value: 1000000
+			  max: 1000,
+			  value: 1000
 			});
 			callback(null, $(".threshold_slider").slider("option", "value"));
 		});
 		d3.select("#threshold_slider")
 			.append("div").attr("id", "slider_value")
-			.text("1.00 s")
+			.text("100%")
 	}
 	
 	function createComboBox() {
 	
-		var options = [ "", "avg_resp_time", "name" ];
+		var options = [ "name", "cpu" ];
 		var combobox = d3.select("#bellsnwhistles").append("div").classed("combobox", true)
 			combobox.append("div").classed("combolabel", true).text("Sort: ")
 			combobox.append("form").attr("name", "combobox")
@@ -407,12 +424,12 @@ function createTiles(s) {
 			.select("g")
 			.selectAll("rect")
 			.attr("class", function(d) {
-				if(d.topo.id != "none") {
-					if(typeof d.topo.resp_avg != 'undefined') {
+				if(servers[d] != "none") {
+					if(typeof servers[d] != 'undefined') {
 						var quantize = d3.scale.quantile()
-							.domain([0, number])
+							.domain([0, number/10])
 							.range(d3.range(10));
-						return "hoverable h" + (1 + quantize(d.topo.resp_avg))
+						return "hoverable h" + (1 + quantize(servers[d].cpu))
 					}
 					else {
 						return "hoverable"
@@ -463,7 +480,7 @@ function processes(server) {
 
 	var start = new Date();
 	
-	parseData(9869);
+	parseData(server);
 		
 	function showProcesses(d) {
 		var procs = d3.select("#mainsvg").append("g").attr("id", "procs");
