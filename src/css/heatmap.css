@@ -35,10 +35,10 @@ body {
 	overflow: hidden;
 	position: relative;
 	text-align: center;
-	left: 8px;
+	left: 15px;
 	width: 60px;
 	border: 1px solid black;
-	background: #ffffff
+	background: #ffffff;
 }
 
 .combolabel {
@@ -49,6 +49,10 @@ body {
 
 .combobox {
 	padding-bottom: 10px;
+}
+
+#t-combobox {
+	white-space: nowrap;
 }
 
 #appcontainer {
@@ -123,7 +127,7 @@ svg {
 
 .hoverable:hover {
 	fill-opacity: .8;
-	stroke-width: 1;
+	stroke-width: 2;
 	stroke: black;
 }
 
@@ -177,46 +181,4 @@ svg {
 
 .p10 {
 	fill: #004D66
-}
-
-/* 10 buckets green to red for heatmap */
-
-.h1 {
-	fill: #00FF00;
-}
-
-.h2 {
-	fill: #40FF00;
-}
-
-.h3 {
-	fill: #80FF00;
-}
-
-.h4 {
-	fill: #BFFF00;
-}
-
-.h5 {
-	fill: #FFFF00;
-}
-
-.h6 {
-	fill: #FFBF00;
-}
-
-.h7 {
-	fill: #FF8000;
-}
-
-.h8 {
-	fill: #FF5C26;
-}
-
-.h9 {
-	fill: #FF4000;
-}
-
-.h10 {
-	fill: #FF0000;
 }
