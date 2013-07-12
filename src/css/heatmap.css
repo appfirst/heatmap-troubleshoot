@@ -1,29 +1,36 @@
 body {
-	background: #EEEEEE;
+	background: #000000;
+	color: #FF6600;
+	font-family: "Courier New";
 }
 
 #header{
-	width: 900px;
-	margin-left: auto ;
-	margin-right: auto ;
-	background-color: #777777;
-	color: white;
-	font-size: 30px;
+	width: 960px;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: #444444;
+	color: #FF6600;
+	font-size: 20px;
 	text-align: center;
 	padding: 10px;
 }
 
 #mainDiv {
-	width: 900px;
+	width: 960px;
 	margin-left: auto ;
 	margin-right: auto ;
 	padding: 10px;
 	overflow: hidden;
 }
 
-#bellsnwhistles {
+.bellsnwhistles {
+	width: 217px;
+	height: 347px;
 	float: left;
-	padding: 30px;
+	padding: 20px;
+	margin: 20px;
+	font-size: 12px;
+	background: #444444;
 }
 
 #bellsnwhistles .slider_title {
@@ -37,13 +44,14 @@ body {
 	text-align: center;
 	left: 15px;
 	width: 60px;
+	color: black;
 	border: 1px solid black;
 	background: #ffffff;
 }
 
 .combolabel {
 	float: left;
-	padding-left: 20px;
+	padding-top: 3px;
 	padding-right: 10px;
 }
 
@@ -51,12 +59,15 @@ body {
 	padding-bottom: 10px;
 }
 
-#t-combobox {
-	white-space: nowrap;
+.tcombobox {
+	padding: 5px;
 }
 
 #appcontainer {
+	margin: 20px;
+	padding: 20px;
 	overflow: hidden;
+	background: #444444;
 }
 
 #threshold_slider {
@@ -100,11 +111,8 @@ svg {
 	font-weight: bold;
 }
 
-#details {
-	
-}
-
-#dirtyNumbers {
+.dirty-numbers {
+	color: black;
 	font-family: "Courier New";
 	font-size: 12px;
 	overflow: hidden;
@@ -139,46 +147,4 @@ svg {
 
 .backbutton:hover {
 	opacity: .8;
-}
-
-/* 10 buckets beige to blue for processes */
-
-.p1 {
-	fill: #BFEFFF
-}
-
-.p2 {
-	fill: #99E5FF
-}
-
-.p3 {
-	fill: #73DCFF
-}
-
-.p4 {
-	fill: #4CD2FF
-}
-
-.p5 {
-	fill: #26C9FF
-}
-
-.p6 {
-	fill: #00BFFF
-}
-
-.p7 {
-	fill: #00A3D9
-}
-
-.p8 {
-	fill: #0086B3
-}
-
-.p9 {
-	fill: #00698C
-}
-
-.p10 {
-	fill: #004D66
 }
