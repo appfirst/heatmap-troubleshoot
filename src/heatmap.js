@@ -40,7 +40,7 @@ queue()
 		createHeatMap(data)
 	})
 	
-var adjustColors = function(number, callback) {
+var adjustServerColors = function(number, callback) {
 	var quantize = d3.scale.quantile()
 		.domain([0, number])
 		.range(d3.range(10));
@@ -82,6 +82,44 @@ var adjustColors = function(number, callback) {
 	}
 }
 	
+var adjustProcessColors = function(number, callback) {
+	var quantize = d3.scale.quantile()
+		.domain([0, number])
+		.range(d3.range(10));
+	if(!transition) {
+		d3.select("#procs").selectAll("*")
+			.style("fill", function(d) {
+				if(ptcombobox.selection.selectedIndex == 0) {
+					return (rgcolor(1 + quantize(d.data[0].cpu)))
+				}
+				else if(ptcombobox.selection.selectedIndex == 1) {
+					return (rgcolor(1 + quantize(d.data[0].sread)))
+				}			
+			})
+			.attr("class", function(d) {
+				return "hoverable"
+			});
+	}
+	if(transition) {
+		d3.select("#procs").selectAll("*")
+			.transition().duration(1000)
+			.style("fill", function(d) {
+				if(ptcombobox.selection.selectedIndex == 0) {
+					return (rgcolor(1 + quantize(d.data[0].cpu)))
+				}
+				else if(ptcombobox.selection.selectedIndex == 1) {
+					return (rgcolor(1 + quantize(d.data[0].sread)))
+				}
+			})
+			.attr("class", function(d) {
+				return "hoverable"
+			});
+	}
+	if(typeof callback != "undefined") {
+		callback();
+	}
+}
+
 var loadedMore = function(l, callback) {
 	d3.select("#loading").transition().duration(1000)
 		.ease("linear")
@@ -159,6 +197,19 @@ function changeThreshold() {
 	transition = false;
 }
 
+function changeProcThreshold() {
+	transition = true;
+	if(ptcombobox.selection.selectedIndex === 0) {
+		$(".proc_threshold_slider").slider("option", "max", 100);
+		$(".proc_threshold_slider").slider("option", "value", 100);
+	}
+	else if(ptcombobox.selection.selectedIndex === 1) {
+		$(".proc_threshold_slider").slider("option", "max", 1000000);
+		$(".proc_threshold_slider").slider("option", "value", 1000000);
+	}
+	transition = false;
+}
+
 function mOverServer(d) {
 	var details = d3.select("#server-details");
 	details.select("#server-name").text("Name: " + d)
@@ -176,7 +227,7 @@ function mOverServer(d) {
 		}
 		return num;
 	});
-	details.select("#server-Outbound").text(function() {
+	details.select("#server-outbound").text(function() {
 		var s = "Outbound Traffic: ";
 		var num = Math.floor(Number(servers[d].swrite));
 		if(num <= 1024)
@@ -197,8 +248,50 @@ function mOutServer() {
 	details.select("#server-name").text("Name: ")
 	details.select("#server-cpu").text("CPU Usage: ");
 	details.select("#server-inbound").text("Inbound Traffic: ");
-	details.select("#server-Outbound").text("Outbound Traffic: ");
+	details.select("#server-outbound").text("Outbound Traffic: ");
 	details.select("#server-processes-num").text("No. of Processes: ");
+}
+
+function mOverProcess(d) {
+	var details = d3.select("#process-details");
+	details.select("#process-name").text("Name: " + d.name);
+	details.select("#process-cpu").text("CPU Usage: " + d.data[0].cpu + "%");
+	details.select("#process-inbound").text(function() {
+		var s = "Inbound Traffic: ";
+		var num = Math.floor(Number(d.data[0].sread));
+		if(num <= 1024)
+			num = s + " " + num + " B";
+		else if(num < 1048576) {
+			num = s + " " + Math.floor(num / 1024) + " KB";
+		}
+		else if(num < 1073741824) {
+			num = s + " " + Math.floor(num / 1048576 * 10)/10 + " MB";
+		}
+		return num;
+	});
+	details.select("#process-outbound").text(function() {
+		var s = "Outbound Traffic: ";
+		var num = Math.floor(Number(d.data[0].swrite));
+		if(num <= 1024)
+			num = s + " " + num + " B";
+		else if(num < 1048576) {
+			num = s + " " + Math.floor(num / 1024) + " KB";
+		}
+		else if(num < 1073741824) {
+			num = s + " " + Math.floor(num / 1048576 * 10)/10 + " MB";
+		}
+		return num;
+	});
+	details.select("#process-response-num").text("No. of Responses: " + d.data[0].resp_num);
+}
+
+function mOutProcess() {
+	var details = d3.select("#process-details");
+	details.select("#process-name").text("Name: ");
+	details.select("#process-cpu").text("CPU Usage: ");
+	details.select("#process-inbound").text("Inbound Traffic: ");
+	details.select("#process-outbound").text("Outbound Traffic: ");
+	details.select("#process-response-num").text("No. of Responses: ");
 }
 
 function zoomIn(d, i) {
@@ -465,12 +558,75 @@ function createTools() {
 		jQuery("<div/>", {
 			id: "processbells",
 			class: "bellsnwhistles",
-			text: "shhhhhh",
 			display: "none"
 		})
 	);
+	
 	d3.select("#processbells").append("input").attr("id", "textBox").attr("type", "text").attr("oninput", "filterProcesses()").attr("disabled", true);
+	var options = [ "name", "cpu", "inbound traffic", "outbound traffic", "no. of responses" ];
+	var combobox = d3.select("#processbells").append("div").classed("pcombobox", true);
+		combobox.append("div").classed("combolabel", true).text("Sort: ");
+		combobox.append("form").attr("name", "pcombobox")
+			.append("select").attr("name", "selection").attr("size", 1).attr("onChange", "sortProcesses()");
+		options.forEach( function(e) {
+			d3.select(".pcombobox").select("form").select("select")
+				.append("option").attr("value", e).text(e);
+		});
 	$("#processbells").hide();
+	
+	var createProcSlider = function(callback) {
+		d3.select("#processbells")
+			.append("div").attr("id", "proc_threshold_slider")
+		var options = [ "cpu", "inbound traffic" ];
+		var combobox = d3.select("#processbells").append("div").classed("ptcombobox", true);
+		combobox.append("div").classed("combolabel", true).text("Threshold: ");
+		combobox.append("form").attr("name", "ptcombobox")
+			.append("select").attr("name", "selection").attr("size", 1).attr("onChange", "changeProcThreshold()");
+		options.forEach( function(e) {
+			d3.select(".ptcombobox").select("form").select("select")
+				.append("option").attr("value", e).text(e);
+		});
+		d3.select("#proc_threshold_slider")
+			.append("div").classed("proc_threshold_slider", true)
+		$(function() {
+			$(".proc_threshold_slider").slider({
+				slide: function( event, ui ) { 
+					adjustProcessColors(ui.value);
+					d3.select("#proc_slider_value").text( function() {
+						var value = $(".proc_threshold_slider").slider("option", "value");
+						if(tcombobox.selection.selectedIndex == 0) {
+							return value + "%";
+						}
+						else {
+							return value;
+						}
+					});
+				},
+				change: function( event, ui ) { 
+					adjustProcessColors(ui.value);
+					d3.select("#proc_slider_value").text( function() {
+						var value = $(".proc_threshold_slider").slider("option", "value");
+						if(tcombobox.selection.selectedIndex == 0) {
+							return value + "%";
+						}
+						else {
+							return value;
+						}		
+					});
+				},
+				step: 1,
+				min: 0,
+				max: 100,
+				value: 100
+			});
+			if(callback != undefined) {
+				callback(null, $(".threshold_slider").slider("option", "value"));
+			}
+		});
+		d3.select("#proc_threshold_slider")
+			.append("div").attr("id", "proc_slider_value")
+			.text("100%")
+	}
 	
 	var createSlider = function(callback) {
 		d3.select("#bellsnwhistles")
@@ -488,33 +644,34 @@ function createTools() {
 			.append("div").classed("threshold_slider", true)
 		$(function() {
 			$(".threshold_slider").slider({
-			  slide: function( event, ui ) { 
-				adjustColors(ui.value);
-				d3.select("#slider_value").text( function() {
-					var value = $(".threshold_slider").slider("option", "value");
-					if(tcombobox.selection.selectedIndex == 0) {
-						return value + "%";
-					}
-					else {
-						return value;
-					}
-				});
-			  },
-			  change: function( event, ui ) { 
-				adjustColors(ui.value);
-				d3.select("#slider_value").text( function() {
-					var value = $(".threshold_slider").slider("option", "value");
-					if(tcombobox.selection.selectedIndex == 0) {
-						return value + "%";
-					}
-					else {
-						return value;
-					}				});
-			  },
-			  step: 1,
-			  min: 0,
-			  max: 100,
-			  value: 100
+				slide: function( event, ui ) { 
+					adjustServerColors(ui.value);
+					d3.select("#slider_value").text( function() {
+						var value = $(".threshold_slider").slider("option", "value");
+						if(tcombobox.selection.selectedIndex == 0) {
+							return value + "%";
+						}
+						else {
+							return value;
+						}
+					});
+				},
+				change: function( event, ui ) { 
+					adjustServerColors(ui.value);
+					d3.select("#slider_value").text( function() {
+						var value = $(".threshold_slider").slider("option", "value");
+						if(tcombobox.selection.selectedIndex == 0) {
+							return value + "%";
+						}
+						else {
+							return value;
+						}				
+					});
+				},
+				step: 1,
+				min: 0,
+				max: 100,
+				value: 100
 			});
 			callback(null, $(".threshold_slider").slider("option", "value"));
 		});
@@ -534,7 +691,9 @@ function createTools() {
 				d3.select(".combobox").select("form").select("select")
 					.append("option").attr("value", e).text(e);
 			});
-		callback();
+		if(callback != undefined) {
+			callback();
+		}
 	}
 	
 	var addDirtyNumbers = function(divname, dnID, callback) {
@@ -547,11 +706,11 @@ function createTools() {
 	queue()
 		.defer(createSlider)
 		.defer(createComboBox)
-		.defer(adjustColors, $(".threshold_slider").slider("option", "value"))
+		.defer(createProcSlider)
+		.defer(adjustServerColors, $(".threshold_slider").slider("option", "value"))
 		.defer(addDirtyNumbers, "bellsnwhistles", "server")
 		.defer(addDirtyNumbers, "processbells", "process")
 		.awaitAll(function() {
-			console.log("haha");
 			var serverDetails = d3.select("#server-numbers").append("g").attr("id", "server-details");
 			serverDetails.append("div").attr("id", "server-name").text("Name: ");
 			serverDetails.append("div").attr("id", "server-cpu").text("CPU Usage: ");
@@ -564,7 +723,7 @@ function createTools() {
 			processDetails.append("div").attr("id", "process-inbound").text("Inbound Traffic: ");
 			processDetails.append("div").attr("id", "process-outbound").text("Outbound Traffic: ");
 			processDetails.append("div").attr("id", "process-response-num").text("No. of Responses: ");
-			});
+		});
 }
 
 function parseData(server, callback) {
@@ -586,34 +745,33 @@ function parseData(server, callback) {
 
 function showProcesses(d) {
 	var procs = d3.select("#mainsvg").append("g").attr("id", "procs");
-	procs.selectAll("circle").data(d).enter()
-		.append("circle")
-		.attr("r", 0)
-		.style("fill", function() {
-			var r = Math.floor(Math.random() * 3);
-			if(r == 0) {
-				return "blue";
-			} else if(r == 1) {
-				return "red";
-			} else {
-				return "yellow";
-			}
-		})
+	procs.selectAll("rect").data(d).enter()
+		.append("rect")
+		.classed("hoverable", true)
+		.attr("opacity", 0)
 		.attr("stroke", "gray")
 		.attr("stroke-width", 1)
-		.transition().duration(500)
-		.ease("elastic")
-		.attr("r", 20)
-		.attr("cx", function(x, i) {
-			return 50 * (i % 10) + 75;
+		.on("mouseover", function(d) {
+			mOverProcess(d);
 		})
-		.attr("cy", function(x, i) {
-			return 50 * Math.floor(i / 10) + 75;
+		.on("mouseout", function() {
+			mOutProcess();
+		})
+		.transition().duration(1000)
+		.attr("opacity", 1)
+		.attr("width", 40)
+		.attr("height", 40)
+		.attr("x", function(x, i) {
+			return 40 * (i % 12) + 60;
+		})
+		.attr("y", function(x, i) {
+			return 40 * Math.floor(i / 12) + 60;
 		});
 	d3.select(".backbutton")
 		.on("mousedown", function() {
 			zoomOut();
 		});
+	adjustProcessColors(100);
 }
 
 function processes(server) {
@@ -624,6 +782,61 @@ function processes(server) {
 			showProcesses(data[0]);
 			d3.select("#textBox").attr("disabled", null);
 		})
+}
+
+function sortProcesses() {
+	var procs = d3.select("#procs").selectAll("*")
+	if(pcombobox.selection.selectedIndex == 0) { //name
+		var sorted = procs.sort(nameSort);
+	}
+	else if(pcombobox.selection.selectedIndex == 1) { //cpu
+		var sorted = procs.sort(cpuSort);
+	}
+	else if(pcombobox.selection.selectedIndex == 2) { //inbound traffic
+		var sorted = procs.sort(inboundSort);
+	}
+	else if(pcombobox.selection.selectedIndex == 3) { //outbound traffic
+		var sorted = procs.sort(outboundSort);
+	}
+	else if(pcombobox.selection.selectedIndex == 4) { //num responses
+		var sorted = procs.sort(respSort);
+	}
+	
+	sorted[0].forEach(function(e, i) {
+		d3.select(e).transition().duration(1000)
+			.attr("x", 40 * (i % 12) + 60)
+			.attr("y", Math.floor(i / 12) * 40 + 60)
+	});
+	
+	function nameSort(a, b) {
+		if(a.name.toLowerCase() < b.name.toLowerCase()) { return -1; }
+		else if(a.name.toLowerCase() == b.name.toLowerCase()) { return 0; }
+		else { return 1; }
+	}
+	
+	function inboundSort(a,b) {
+		if(Number(a.data[0].sread) < Number(b.data[0].sread)) { return -1; }
+		else if(Number(a.data[0].sread) == Number(b.data[0].sread)) { return 0; }
+		else { return 1; }
+	}
+	
+	function outboundSort(a,b) {
+		if(Number(a.data[0].swrite) < Number(b.data[0].swrite)) { return -1; }
+		else if(Number(a.data[0].swrite) == Number(b.data[0].swrite)) { return 0; }
+		else { return 1; }
+	}
+	
+	function cpuSort(a,b) {
+		if(Number(a.data[0].cpu) < Number(b.data[0].cpu)) { return -1; }
+		else if(Number(a.data[0].cpu) == Number(b.data[0].cpu)) { return 0; }
+		else { return 1; }
+	}
+	
+	function respSort(a,b) {
+		if(Number(a.data[0].resp_num) < Number(b.data[0].resp_num)) { return -1; }
+		else if(Number(a.data[0].resp_num) == Number(b.data[0].resp_num)) { return 0; }
+		else { return 1; }
+	}
 }
 
 function filterProcesses() {
@@ -643,8 +856,8 @@ function filterProcesses() {
 	visible.forEach( function(d, i) {
 		if(visible[i]) {
 			d3.select(circles[i]).transition().duration(300)
-				.attr("cx", 50 * (count % 10) + 75)
-				.attr("cy", 50 * Math.floor(count / 10) + 75)
+				.attr("x", 40 * (count % 12) + 60)
+				.attr("y", 40 * Math.floor(count / 12) + 60)
 				.attr("opacity", 1)
 				.moveToFront;
 			count = count + 1;
