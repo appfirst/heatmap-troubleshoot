@@ -31,9 +31,10 @@ body {
 	margin: 20px;
 	font-size: 12px;
 	background: #444444;
+	border-radius: 5px;
 }
 
-#bellsnwhistles .slider_title {
+.slider_title {
 	text-align: center;
 	min-width: 200px
 }
@@ -48,6 +49,12 @@ body {
 	color: black;
 	border: 1px solid black;
 	background: #ffffff;
+}
+
+.label {
+	float: left;
+	padding-top: 3px;
+	padding-right: 10px;
 }
 
 .combolabel {
@@ -65,6 +72,7 @@ body {
 }
 
 #appcontainer {
+	border-radius: 5px;
 	margin: 20px;
 	padding: 20px;
 	overflow: hidden;
@@ -75,41 +83,39 @@ body {
 	padding-bottom: 10px;
 }
 
-#bellsnwhistles  .threshold_slider {
+.slider {
 	float: left;
 	width:110px;
 	position:relative;
 	top: 8px;
 	left: 0px;
-	display:block;
 	height: 4px;
 	border-radius:7px;
 	box-shadow:inset 0 1px 0 #F9D7C5;
 	position:relative;
 	padding-left: 15px;
 	overflow:visible !important;
+}
+
+.tooltip {
+	color: black;
+	position: absolute;
+	text-align: left;
+	width: 140px;
+	padding: 8px;
+	font: 10px sans-serif;
+	background: #ddd;
+	border: solid 1px #aaa;
+	border-radius: 8px;
+	pointer-events: none;
+	overflow: hidden;
 }
 
 .ui-slider-handle {
 	top: -5px !important;
 }
 
-#processbells  .proc_threshold_slider {
-	float: left;
-	width:110px;
-	position:relative;
-	top: 8px;
-	left: 0px;
-	display:block;
-	height: 4px;
-	border-radius:7px;
-	box-shadow:inset 0 1px 0 #F9D7C5;
-	position:relative;
-	padding-left: 15px;
-	overflow:visible !important;
-}
-
-#processbells #proc_slider_value {
+.slider-value {
 	overflow: hidden;
 	position: relative;
 	text-align: center;
@@ -121,7 +127,13 @@ body {
 	background: #ffffff;
 }
 
+
 #proc_threshold_slider {
+	padding-top: 5px;
+	padding-bottom: 10px;
+}
+
+#socket_threshold_filter {
 	padding-top: 5px;
 	padding-bottom: 10px;
 }
@@ -140,6 +152,11 @@ svg {
 	cursor: default;
 }
 
+#textBox {
+	margin-bottom: 10px;
+}
+
+
 .dirty-numbers {
 	color: black;
 	font-family: "Courier New";
@@ -155,6 +172,7 @@ svg {
 	max-height: 200px;
 	text-align: left;
 	background: #DDDDDD;
+	border-radius: 10px;
 }
 
 .hoverable {
