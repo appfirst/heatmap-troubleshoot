@@ -18,7 +18,22 @@ var collectorIDs = {};
 var serverLinkMap = [];
 var transition = false;
 var socketRadius = 250;
+var ctrlPressed = false;
+var buttonDown = false;
+var multiServer = false;
 
+d3.select(this).on("keydown", function() {
+		if(d3.event.ctrlKey && !buttonDown) {
+			ctrlPressed = true;
+			buttonDown = true;
+		}
+	})
+	.on("keyup", function() {
+		if(d3.event.keyCode == 17) {
+			ctrlPressed = false;
+			buttonDown = false;
+		}
+	})
 	
 var getFile = function(url, callback) {
 	$.ajax({
@@ -62,7 +77,7 @@ $.ajax( {
 		console.log(errorType);
 	}
 });
-	
+
 var adjustServerColors = function(number, callback) {
 	var quantize = d3.scale.quantile()
 		.domain([0, number])
@@ -104,7 +119,7 @@ var adjustServerColors = function(number, callback) {
 		callback();
 	}
 }
-	
+
 var adjustProcessColors = function(number, callback) {
 	var quantize = d3.scale.quantile()
 		.domain([0, number])
@@ -127,7 +142,7 @@ var adjustProcessColors = function(number, callback) {
 		d3.select("#procs").selectAll("*")
 			.transition().duration(1000)
 			.style("fill", function(d) {
-				if(ptcombobox.selfaceection.selectedIndex == 0) {
+				if(ptcombobox.selection.selectedIndex == 0) {
 					return (rgcolor(1 + quantize(d.data[0].cpu)))
 				}
 				else if(ptcombobox.selection.selectedIndex == 1) {
@@ -321,14 +336,12 @@ function mOutSocket() {
 }
 
 function mOverServer(d) {
-	var details = d3.select("#server-details");
-	details.select("#server-name").text("Name: " + d)
-	details.select("#server-cpu").text("CPU Usage: " + servers[d].cpu + "%");
-	details.select("#server-inbound").text("Inbound Traffic: " + viewDataSize(Number(servers[d].sread)));
-	details.select("#server-outbound").text("Outbound Traffic: " + viewDataSize(Number(servers[d].swrite)));
-	details.select("#server-processes-num").text("No. of Processes: " + servers[d].pnum);
-	d3.select(".tooltip").transition().duration(500).style("opacity", .9);
-	d3.select(".tooltip").text("Name: " + d)
+	$(".tooltip").html("Name: " + d + 
+		"<br>CPU Usage: " + servers[d].cpu + "%" + 
+		"<br>Inbound Traffic: " + viewDataSize(Number(servers[d].sread)) + 
+		"<br>Outbound Traffic: " + viewDataSize(Number(servers[d].swrite)) + 
+		"<br>No. of Processes: " + servers[d].pnum)
+	d3.select(".tooltip").transition().duration(200).style("opacity", .9);
 }
 
 function mOutServer() {
@@ -338,7 +351,7 @@ function mOutServer() {
 	details.select("#server-inbound").text("Inbound Traffic: ");
 	details.select("#server-outbound").text("Outbound Traffic: ");
 	details.select("#server-processes-num").text("No. of Processes: ");
-	d3.select(".tooltip").transition().duration(500).style("opacity", 1e-16);
+	d3.select(".tooltip").transition().duration(200).style("opacity", 0);
 }
 
 function mOverProcess(d) {
@@ -362,116 +375,128 @@ function mOutProcess() {
 function zoomIn(d, i) {
 	if(layer == 1) {
 		layer = 2;
-		$(".threshold_slider").slider("option", "disabled", true);
-		d3.selectAll(".hoverable").on("mouseout", null)
-			.on("mouseover", null).on("click", null)
-			.on("mousemove", null);
-		d3.select(".tooltip").transition().duration(300).style("opacity", 1e-16)
-		d3.select("#scombobox").select("form").select("select").attr("disabled", true);
-		d3.select(".tcombobox").select("form").select("select").attr("disabled", true);
+		if(d[0][0].length == 1) {
+			$(".threshold_slider").slider("option", "disabled", true);
+			d3.selectAll(".hoverable").on("mouseout", null)
+				.on("mouseover", null).on("click", null)
+				.on("mousemove", null);
+			d3.select(".tooltip").transition().duration(300).style("opacity", 1e-16)
+			d3.select("#scombobox").select("form").select("select").attr("disabled", true);
+			d3.select(".tcombobox").select("form").select("select").attr("disabled", true);
 
-		var setValue = function(callback) {
-			d3.select("body").select("#mainDiv")
-				.select("svg").select("g")
-				.selectAll("rect")[0]
-				.forEach( function(e, j) {
-					if(e.__data__ == d[0][0].__data__) {
-						thisRect = e;
-						oldx = thisRect.x.baseVal.value;
-						oldy = thisRect.y.baseVal.value;
-						if(callback != undefined) {
-							callback();
+			var setValue = function(callback) {
+				d3.select("body").select("#mainDiv")
+					.select("svg").select("g")
+					.selectAll("rect")[0]
+					.forEach( function(e, j) {
+						if(e.__data__ == d[0][0][0].__data__) {
+							thisRect = e;
+							oldx = thisRect.x.baseVal.value;
+							oldy = thisRect.y.baseVal.value;
+							if(callback != undefined) {
+								callback();
+							}
 						}
-					}
+					})
+			}	
+			
+			var doAction = function(callback) {
+				d3.select(d[0][0][0]).on("click", null)
+					.transition().duration(1000)
+					.attr("width", 600)
+					.attr("height", 600)
+					.attr("x", 0)
+					.attr("y", 0)
+				d3.select("body").select("#mainDiv").select("svg").select("g").selectAll("rect")
+					.filter(function(x, j) {
+						return x.__data__ != d[0][0][0].__data__;
+					})
+					.transition().duration(1000)
+					.attr("width", 600)
+					.attr("height", 600)
+					.attr("x", function() {
+						var dif = (this.x.baseVal.value - thisRect.x.baseVal.value)
+						var svgWidth = d3.select("body").select("#mainDiv")
+							.select("svg")[0][0].clientWidth
+						var rectWidth = thisRect.width.baseVal.value;
+						var mult = svgWidth / rectWidth;
+						return dif * mult;
+					})
+					.attr("y", function() {
+						var dif = (this.y.baseVal.value - thisRect.y.baseVal.value)
+						var svgHeight = d3.select("body").select("#mainDiv")
+							.select("svg")[0][0].clientHeight
+						var rectHeight = thisRect.height.baseVal.value;
+						var mult = svgHeight / rectHeight;
+						return dif * mult;
+					})
+				d3.select("body").select("#mainDiv").select("svg")
+					.append("g").attr("class", "backbutton")
+					.append("rect")
+					.attr("x", d3.select(d[0][0][0]).attr("x"))
+					.attr("y", d3.select(d[0][0][0]).attr("y"))
+					.attr("width", 0)
+					.attr("height", 0)
+					.attr("opacity", 1)
+					.style("fill", "white")
+					.classed("back", true)
+					.transition().duration(1000)
+					.attr("width", 50)
+					.attr("height", 30)
+					.attr("x", 20)
+					.attr("y", 20);
+					
+				d3.select(".backbutton").append("text")
+					.text("Back")
+					.attr("x", d3.select(d[0][0][0]).attr("x"))
+					.attr("y", d3.select(d[0][0][0]).attr("y"))
+					.attr("width", 0)
+					.attr("height", 0)
+					.attr("font-size", 0)
+					.transition().duration(1000)
+					.attr("font-size", 12)
+					.attr("x", 32)
+					.attr("y", 40)
+					
+				d3.select(d[0][0][0]).moveToFront;
+			}
+			queue()
+				.defer(setValue)
+				.awaitAll(function() {
+					$("#bellsnwhistles").fadeOut(500, function() {
+						$("#processbells").fadeIn(500);
+					});
+					doAction();
 				})
 		}
-		
-		var loadingbar = d3.select("#mainsvg").append("rect")
-			.attr("id", "loading-bar")
-			.attr("x", 225)
-			.attr("y", 225)
-			.attr("width", 150)
-			.attr("height", 25)
-			.style("fill", "white")
-			.style("stroke-width", "5px")
-			.style("stroke", "black");
-		var bar = d3.select("#mainsvg").append("rect")
-			.attr("id", "loading")
-			.attr("x", 230)
-			.attr("y", 230)
-			.attr("width", 0)
-			.attr("height", 15)
-			.style("fill", "blue")		
-		
-		var doAction = function(callback) {
-			d.on("click", null)
-				.transition().duration(1000)
-				.attr("width", 600)
-				.attr("height", 600)
-				.attr("x", 0)
-				.attr("y", 0)
-				
-			d3.select("body").select("#mainDiv").select("svg").select("g").selectAll("rect")
-				.filter(function(x, j) {
-					return x.__data__ != d[0][0].__data__;
-				})
-				.transition().duration(1000)
-				.attr("width", 600)
-				.attr("height", 600)
-				.attr("x", function() {
-					var dif = (this.x.baseVal.value - thisRect.x.baseVal.value)
-					var svgWidth = d3.select("body").select("#mainDiv")
-						.select("svg")[0][0].clientWidth
-					var rectWidth = thisRect.width.baseVal.value;
-					var mult = svgWidth / rectWidth;
-					return dif * mult;
-				})
-				.attr("y", function() {
-					var dif = (this.y.baseVal.value - thisRect.y.baseVal.value)
-					var svgHeight = d3.select("body").select("#mainDiv")
-						.select("svg")[0][0].clientHeight
-					var rectHeight = thisRect.height.baseVal.value;
-					var mult = svgHeight / rectHeight;
-					return dif * mult;
-				})
+		else {
+			multiServer = true;
+			$("#tiles").fadeOut();
 			d3.select("body").select("#mainDiv").select("svg")
 				.append("g").attr("class", "backbutton")
 				.append("rect")
-				.attr("x", d.attr("x"))
-				.attr("y", d.attr("y"))
-				.attr("width", 0)
-				.attr("height", 0)
-				.attr("opacity", 1)
+				.style("opacity", 0)
 				.style("fill", "white")
 				.classed("back", true)
-				.transition().duration(1000)
 				.attr("width", 50)
 				.attr("height", 30)
 				.attr("x", 20)
-				.attr("y", 20);
+				.attr("y", 20)
+				.transition().duration(1000)
+				.style("opacity", 1);
 				
 			d3.select(".backbutton").append("text")
 				.text("Back")
-				.attr("x", d.attr("x"))
-				.attr("y", d.attr("y"))
-				.attr("width", 0)
-				.attr("height", 0)
-				.attr("font-size", 0)
-				.transition().duration(1000)
 				.attr("font-size", 12)
 				.attr("x", 32)
 				.attr("y", 40)
-				
-			d.moveToFront;
+				.style("opacity", 0)
+				.transition().duration(1000)
+				.style("opacity", 1);
+			$("#bellsnwhistles").fadeOut(500, function() {
+				$("#processbells").fadeIn(500);
+			});
 		}
-		queue()
-			.defer(setValue)
-			.awaitAll(function() {
-				$("#bellsnwhistles").fadeOut(500, function() {
-					$("#processbells").fadeIn(500);
-				});
-				doAction();
-			})
 	}
 	else if(layer == 2) {
 		layer = 3;
@@ -497,71 +522,121 @@ function zoomIn(d, i) {
 };
 
 function click(i, d) {
-	zoomIn(d3.select(d), i);
-	processes(collectorIDs[d3.select(d)[0][0].__data__]);
-	d3.select(d).attr("class", function() {
-		var re = d3.select(d).attr("class");
-		re = re.replace("hoverable", "");
-		re = re.replace(" ", "");
-		return re;
-	})
+	if(ctrlPressed && !d3.select(d).attr("selected")) {
+		d3.select(d).attr("selected", true)
+			.style("stroke-width", "2px")
+			.style("stroke", "black")
+			.style("opacity", .8);
+		$("#selected-servers").html($("#selected-servers").html() + d.__data__ + "<br>");
+	}
+	else if(ctrlPressed && d3.select(d).attr("selected")) {
+		d3.select(d).attr("selected", null)
+			.style("stroke-width", "1px")
+			.style("stroke", "gray")
+			.style("opacity", 1);
+		$("#selected-servers").html($("#selected-servers").html().replace(d.__data__ + "<br>", ""));
+	}
+	else {
+		d3.select(d).attr("selected", true);
+		$("#selected-servers").html($("#selected-servers").html() + d.__data__ + "<br>");
+		var serverIDs = [];
+		d3.select("#tiles").selectAll("rect")
+			.filter( function(d) {
+				return d3.select(d3.select(this)[0][0]).attr("selected");
+			})
+			.call(function(d) {
+				d[0].forEach(function(data) {
+					data.__data__.selected = false;
+					d3.select(data).attr("selected", null)
+						.style("stroke-width", "1px")
+						.style("stroke", "gray")
+						.style("opacity", 1);
+					serverIDs.push(data.__data__);
+				})
+				zoomIn(d3.select(d[0]), i);
+			})
+		processes(serverIDs);
+		d3.select("#selected-servers").text("");
+		d3.select(d).attr("selected", null);
+		d3.select(d).attr("class", function() {
+			var re = d3.select(d).attr("class");
+			re = re.replace("hoverable", "");
+			re = re.replace(" ", "");
+			return re;
+		})
+	}
 }
 
 function zoomOut() {
 	if(layer == 2) {
 		layer = 1;
-		d3.select("#textBox")[0][0].value = "";
-		d3.select("#procs").remove();
-		mOutServer();
-		d3.select("#tiles").selectAll("*")
-			.on("mouseover", function(d) {
-				mOverServer(d);
-			})
-			.on("mouseout", function() {
-				mOutServer();
-			})
-		
-		d3.select("#scombobox").select("form").select("select").attr("disabled", null);
-		d3.select(".tcombobox").select("form").select("select").attr("disabled", null);
-		d3.select("#textBox").attr("disabled", true);
-		d3.select("#tiles").selectAll("*").attr("class", function() {
-			var re = d3.select(this).attr("class");
-			if(re.indexOf("hoverable") == -1) {
-				re = "hoverable " + re;
-			}
-			return re;
-		})
-		$(".threshold_slider").slider("option", "disabled", false);
-		d3.select(".backbutton").remove()
-		d3.select(thisRect)
-			.transition().duration(1000)
-			.attr("width", 40)
-			.attr("height", 40)
-			.attr("x", oldx)
-			.attr("y", oldy);
-		d3.select("#tiles").selectAll("*")
-			.filter(function(x, j) {
-				return x != thisRect;
-			})
-			.transition().duration(1000)
-			.attr("x", function() {
-				var dif = (this.x.baseVal.value / columns)
-				return dif + oldx;
-			})
-			.attr("y", function() {
-				var dif = (this.y.baseVal.value / columns)
-				return dif + oldy;
-			})
-			.attr("width", 40)
-			.attr("height", 40)
-			.each("end", function(d) {
-				d3.select("#tiles").selectAll("*")
-					.on("click", function(d, i) {
-						click(i, this);
-					})
-			});
+		if(!multiServer) {
+			d3.select("#textBox")[0][0].value = "";
+			d3.select("#procs").remove();
+			mOutServer();
+			d3.select("#tiles").selectAll("*")
+				.on("mouseover", function(d) {
+					mOverServer(d);
+				})
+				.on("mouseout", function() {
+					mOutServer();
+				})
+				.on("mousemove", function() { 
+					moveToolTip();
+				})
 			
+			d3.select("#scombobox").select("form").select("select").attr("disabled", null);
+			d3.select(".tcombobox").select("form").select("select").attr("disabled", null);
+			d3.select("#textBox").attr("disabled", true);
+			d3.select("#tiles").selectAll("*").attr("class", function() {
+				var re = d3.select(this).attr("class");
+				if(re.indexOf("hoverable") == -1) {
+					re = "hoverable " + re;
+				}
+				return re;
+			})
+			$(".threshold_slider").slider("option", "disabled", false);
+			d3.select(".backbutton").remove()
+			d3.select(thisRect)
+				.transition().duration(1000)
+				.attr("width", 40)
+				.attr("height", 40)
+				.attr("x", oldx)
+				.attr("y", oldy);
+			d3.select("#tiles").selectAll("*")
+				.filter(function(x, j) {
+					return x != thisRect;
+				})
+				.transition().duration(1000)
+				.attr("x", function() {
+					var dif = (this.x.baseVal.value / columns)
+					return dif + oldx;
+				})
+				.attr("y", function() {
+					var dif = (this.y.baseVal.value / columns)
+					return dif + oldy;
+				})
+				.attr("width", 40)
+				.attr("height", 40)
+				.each("end", function(d) {
+					d3.select("#tiles").selectAll("*")
+						.on("click", function(d, i) {
+							click(i, this);
+						})
+						
+				});
+		}
+		else {
+			$("#procs").fadeOut(function() {
+				$("#procs").remove();
+				$("#tiles").fadeIn();
+			})
+			multiServer = false;
+			console.log(multiServer);
+		}
+		$(".backbutton").fadeOut();
 		$("#processbells").fadeOut(500, function() {
+			$(".backbutton").remove();
 			$("#bellsnwhistles").fadeIn(500);
 		});
 	}
@@ -571,7 +646,7 @@ function zoomOut() {
 		$("#socket").remove();
 		$("#procs rect:hidden").fadeIn(1000);
 		d3.select(".backbutton").on("mousedown", null);
-		d3.selectAll(".hoverable").on("click", null)
+		d3.select("#procs").selectAll(".hoverable").on("click", null)
 		$("#socketbells").fadeOut(500, function() {
 			$("#processbells").fadeIn(500);
 			d3.select("#procs").selectAll("rect").on("click", function(d, i) {
@@ -583,7 +658,7 @@ function zoomOut() {
 		});
 	}
 }
-	
+
 function createHeatMap(data) {
 
 	function parseServerData() {
@@ -654,9 +729,7 @@ function createTiles() {
 			mOverServer(d);
 		})
 		.on("mousemove", function(d) {
-			d3.select(".tooltip")
-				.style("left", (d3.event.pageX) + "px")
-				.style("top", (d3.event.pageY) + "px");
+			moveToolTip();
 		})
 		.on("mouseout", function() {
 			mOutServer();
@@ -665,8 +738,15 @@ function createTiles() {
 }
 
 function createToolTip() {
-	var tooltip = d3.select("#mainDiv").append("div").classed("tooltip", true).style("opacity", 1e-6);
-	tooltip.text("words");
+	var tooltip = d3.select("#mainDiv")
+		.append("div").classed("tooltip", true)
+		.style("opacity", 0);
+}
+
+function moveToolTip() {
+	d3.select(".tooltip")
+		.style("left", (d3.event.pageX + 10) + "px")
+		.style("top", (d3.event.pageY + 10) + "px");
 }
 
 function createTools() {
@@ -941,12 +1021,9 @@ function createTools() {
 		.defer(addDirtyNumbers, "processbells", "process")
 		.defer(addDirtyNumbers, "socketbells", "socket")
 		.awaitAll(function() {
-			var serverDetails = d3.select("#server-numbers").append("g").attr("id", "server-details");
-			serverDetails.append("div").attr("id", "server-name").text("Name: ");			
-			serverDetails.append("div").attr("id", "server-cpu").text("CPU Usage: ");
-			serverDetails.append("div").attr("id", "server-inbound").text("Inbound Traffic: ");
-			serverDetails.append("div").attr("id", "server-outbound").text("Outbound Traffic: ");
-			serverDetails.append("div").attr("id", "server-processes-num").text("No. of Processes: ");
+			d3.select("#server-numbers").append("div")
+				.style("font-weight", "bold")
+				.attr("id", "selected-servers");
 			var processDetails = d3.select("#process-numbers").append("g").attr("id", "process-details");
 			processDetails.append("div").attr("id", "process-name").text("Name: ");
 			processDetails.append("div").attr("id", "process-cpu").text("CPU Usage: ");
@@ -961,23 +1038,6 @@ function createTools() {
 			socketDetails.append("div").attr("id", "socket-received").text("Data received: ");
 			socketDetails.append("div").attr("id", "socket-linked").text("Linked to: ");
 		});
-}
-
-function parseData(server, callback) {
-	loadedMore(30);
-	var url = "http://10.7.7.120:9000/api/v1/metrics/?name=sys.server." + server + ".process.\*"
-	d3.json(url,
-		function(error, data) {
-			parsedData = [];
-			data = data["data"][server];
-			for(var point in data) {
-				for(var d in data[point][0]) {
-					parsedData.push({name: data[point][0][d][1], id:d.split(",").join("_"), data:data[point][0][d]});
-				}
-			}
-			callback(null, parsedData)
-		}
-	)
 }
 
 function showLines(id) {
@@ -1011,56 +1071,104 @@ function showLines(id) {
 			})
 }
 
-function showProcesses(d) {
-	var procs = d3.select("#mainsvg").append("g").attr("id", "procs");
-	procs.selectAll("rect").data(d).enter()
-		.append("rect")
-		.classed("hoverable", true)
-		.attr("opacity", 0)
-		.attr("stroke", "gray")
-		.attr("stroke-width", 1)
-		.on("mouseover", function(d) {
-			mOverProcess(d);
-		})
-		.on("mouseout", function() {
-			mOutProcess();
-		})
-		.on("click", function(d, i) {
-			zoomIn(d3.select(d), i);
-		})
-		.transition().duration(1000)
-		.attr("opacity", 1)
-		.attr("width", 40)
-		.attr("height", 40)
-		.attr("x", function(x, i) {
-			return 40 * (i % 12) + 60;
-		})
-		.attr("y", function(x, i) {
-			return 40 * Math.floor(i / 12) + 60;
-		})
-		.each("end", function() {
-			d3.select(this).attr("display", function() {
-				if(d3.select(this)[0][0].y.animVal.value > 500) {
-					return "none";
-				}
-				else {
-					return "inline";
-				}
-			});
-		})
-	d3.select(".backbutton")
-		.on("mousedown", function() {
-			zoomOut();
-		});
-	adjustProcessColors(100);
-}
-
 function processes(server) {
+
+	var flatten = function (array) {
+
+		var returnValue = [];
+		var temporaryFlatArray;
+		for (var i = 0; i < array.length; i++) {
+			if (!Array.isArray(array[i])) {
+				returnValue.push(array[i]);
+			} else {
+				temporaryFlatArray = flatten(array[i]);
+				for (var j = 0; j < temporaryFlatArray.length; j++) {
+					returnValue.push(temporaryFlatArray[j]);
+				}
+			}
+		}
+		return returnValue;
+	};
+
+	function parseData(servers, callback) {
+	
+		var parse = function(id, callback) {
+			var url = "http://10.7.7.120:9000/api/v1/metrics/?name=sys.server." + id + ".process.\*"
+			d3.json(url, function(err, data) {
+				parsedData = [];
+				data = data["data"][id];
+				console.log(data);
+				for(var point in data) {
+					for(var d in data[point][0]) {
+						parsedData.push({name: data[point][0][d][1], id:d.split(",").join("_"), data:data[point][0][d]});
+					}
+				}
+				callback(null, parsedData);
+			})
+		}
+		
+		var q = queue();
+		servers.forEach( function(d, i) {
+			q.defer(parse, collectorIDs[d]);
+		})
+		
+		q.awaitAll(function(err, data) {
+			console.log(data)
+			var merged = data[0].length > 1 ? flatten(data) : data[0];
+			console.log(merged);
+			callback(null, merged);
+		})
+	}
+
+	function showProcesses(d) {
+		var procs = d3.select("#mainsvg").append("g").attr("id", "procs");
+		procs.selectAll("rect").data(d).enter()
+			.append("rect")
+			.classed("hoverable", true)
+			.attr("opacity", 0)
+			.attr("stroke", "gray")
+			.attr("stroke-width", 1)
+			.on("mouseover", function(d) {
+				mOverProcess(d);
+			})
+			.on("mouseout", function() {
+				mOutProcess();
+			})
+			.on("click", function(d, i) {
+				zoomIn(d3.select(d), i);
+			})
+			.transition().duration(1000)
+			.attr("opacity", 1)
+			.attr("width", 40)
+			.attr("height", 40)
+			.attr("x", function(x, i) {
+				return 40 * (i % 12) + 60;
+			})
+			.attr("y", function(x, i) {
+				return 40 * Math.floor(i / 12) + 60;
+			})
+			.each("end", function() {
+				d3.select(this).attr("display", function() {
+					if(d3.select(this)[0][0].y.animVal.value > 500) {
+						return "none";
+					}
+					else {
+						return "inline";
+					}
+				});
+			})
+		d3.select(".backbutton")
+			.on("mousedown", function() {
+				zoomOut();
+			});
+		adjustProcessColors(100);
+	}
 
 	queue(1)
 		.defer(parseData, server)
-		.defer(loadedMore, 100)
-		.awaitAll(function(err, data) {
+		// .defer(loadedMore, 100)
+		.awaitAll(function(err, data){
+			console.log(data[0]);
 			showProcesses(data[0]);
 			d3.select("#textBox").attr("disabled", null);
 		})

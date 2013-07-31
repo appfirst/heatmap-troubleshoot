@@ -101,7 +101,7 @@ body {
 	color: black;
 	position: absolute;
 	text-align: left;
-	width: 140px;
+	min-width: 140px;
 	padding: 8px;
 	font: 10px sans-serif;
 	background: #ddd;
@@ -109,6 +109,7 @@ body {
 	border-radius: 8px;
 	pointer-events: none;
 	overflow: hidden;
+	white-space: nowrap;
 }
 
 .ui-slider-handle {
@@ -156,12 +157,13 @@ svg {
 	margin-bottom: 10px;
 }
 
-
 .dirty-numbers {
+	margin: 0 auto;
 	color: black;
 	font-family: "Courier New";
 	font-size: 12px;
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: hidden;
 	white-space: nowrap;
 	padding-top: 10px;
 	padding-left: 15px;
@@ -172,7 +174,13 @@ svg {
 	max-height: 200px;
 	text-align: left;
 	background: #DDDDDD;
-	border-radius: 10px;
+}
+
+.dirty-numbers#server-numbers {
+	
+	overflow-x: auto;
+	overflow-y: auto;
+	text-align: left;
 }
 
 .hoverable {
