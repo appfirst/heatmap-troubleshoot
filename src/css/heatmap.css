@@ -1,15 +1,18 @@
 body {
-	background: #000000;
-	color: #FF6600;
-	font-family: "Courier New";
+	background: #eee;
+	color: #000000;
+	font-family: "Arial";
 }
 
 #header{
-	width: 960px;
+	width: 350px;
 	margin-left: auto;
 	margin-right: auto;
-	background-color: #444444;
-	color: #FF6600;
+	background-color: #fff;
+	border: 1px solid gray;
+	border-radius: 5px;
+	font-weight: bold;
+	color: #00ccff;
 	font-size: 20px;
 	text-align: center;
 	padding: 10px;
@@ -24,19 +27,20 @@ body {
 }
 
 .bellsnwhistles {
+	border: 1px solid gray;
 	width: 217px;
-	height: 347px;
+	/* height: 347px; */
 	float: left;
 	padding: 20px;
 	margin: 20px;
 	font-size: 12px;
-	background: #444444;
+	background: #fff;
 	border-radius: 5px;
 }
 
 .slider_title {
 	text-align: center;
-	min-width: 200px
+	min-width: 200px;
 }
 
 #bellsnwhistles #slider_value {
@@ -76,7 +80,8 @@ body {
 	margin: 20px;
 	padding: 20px;
 	overflow: hidden;
-	background: #444444;
+	border: 1px solid gray;
+	background: #fff;
 }
 
 #threshold_slider {
@@ -104,7 +109,7 @@ body {
 	min-width: 140px;
 	padding: 8px;
 	font: 10px sans-serif;
-	background: #ddd;
+	background: #eee;
 	border: solid 1px #aaa;
 	border-radius: 8px;
 	pointer-events: none;
@@ -149,12 +154,21 @@ body {
 }
 	
 svg { 
-	overflow: hidden; /*IE10*/
+	overflow: visible; /*IE10*/
 	cursor: default;
 }
 
 #textBox {
 	margin-bottom: 10px;
+}
+
+.bells-label {
+	font-weight: bold;
+	text-align: center;
+	margin-bottom: 10px;
+	font-size: 15px;
+	background-color: #eee;
+	border: 1px solid gray;
 }
 
 .dirty-numbers {
@@ -167,13 +181,21 @@ svg {
 	white-space: nowrap;
 	padding-top: 10px;
 	padding-left: 15px;
-	border: 1px solid black;
+	border: 1px solid gray;
 	max-width: 200px;
 	min-width: 200px;
 	min-height: 200px;
 	max-height: 200px;
 	text-align: left;
-	background: #DDDDDD;
+	background: #eee;
+}
+
+.quick-num {
+	text-anchor: middle; 
+	font-size: 10px !important;
+	font-weight: normal;
+	font-family: "Courier New";
+	fill: gray !important;
 }
 
 .dirty-numbers#server-numbers {
@@ -188,11 +210,11 @@ svg {
 	stroke: gray;
 }
 
-.hoverable:hover {
+/* .hoverable:hover {
 	fill-opacity: .8;
 	stroke-width: 2;
 	stroke: black;
-}
+} */
 
 .notdefined {
 	stroke-width: 1;
@@ -200,8 +222,10 @@ svg {
 	fill: #FFFFFF;
 }
 
-.backbutton {
-	border: 5px solid black;
+.backbutton rect {
+	stroke-width: 1px;
+	stroke: gray;
+	fill: #eee;
 }
 
 .backbutton:hover {
