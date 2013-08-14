@@ -766,6 +766,8 @@ function createTools() {
     })
   );
   d3.select("#bellsnwhistles").append("div").text("Servers").classed("bells-label", true);
+  d3.select("#bellsnwhistles").append("div").text("Ctrl + click to select multiple servers.")
+    .style("font-style", "italic").style("text-align", "center").style("padding-bottom", "5px")
   d3.select("#processbells").append("div").text("Processes").classed("bells-label", true);
   d3.select("#socketbells").append("div").text("Sockets").classed("bells-label", true);
   d3.select("#processbells").append("div").attr("id", "box-container").append("div")
