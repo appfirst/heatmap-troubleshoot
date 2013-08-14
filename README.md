@@ -1,11 +1,16 @@
-dataflow-expansion
+heatmap-troubleshoot
 ==================
 
-An expansion of the Dataflow module that will show more detailed information.
+A troubleshooting application that allows users to spot a problem from the server level and dig down
+into information provided to find the culprit.
 
-Libraries included (not all currently used):
+Libraries included:
 * d3.v3.min.js
 * jquery-1.10.1.min 
 * queue.min.js
+* jquery-ui.min
 	
-Currently needs to be uploaded to a web server to work. Will not work on a local machine because of cross origin requests.
+To run:
+
+Edit the server.py class to contain login information (only needed if app isn't integrated into product).
+Run server.py (proxy server written in Python 2.7). View index.html.
