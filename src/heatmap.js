@@ -89,12 +89,18 @@ var adjustServerColors = function(number, callback) {
       .select("g")
       .selectAll("rect")
       .style("fill", function(d) {
-        if(tcombobox.selection.selectedIndex == 0) {
-          return (rgcolor(1 + quantize(servers[d].cpu)))
+        if(tcombobox.selection.selectedIndex == 0) { //cpu
+          return rgcolor(1 + quantize(servers[d].cpu))
         }
-        else if(tcombobox.selection.selectedIndex == 1) {
-          return (rgcolor(1 + quantize(servers[d].pnum)))
-        }      
+        else if(tcombobox.selection.selectedIndex == 1) { //no. of processes
+          return rgcolor(1 + quantize(servers[d].pnum))
+        }
+		else if(tcombobox.selection.selectedIndex == 2) { //inbound traffic
+		  return rgcolor(1+quantize(servers[d].sread))
+		}
+		else if(tcombobox.selection.selectedIndex == 3) { //outbound traffic
+		  return rgcolor(1+quantize(servers[d].swrite))
+		}
       })
       .attr("class", function(d) {
         return "hoverable"
@@ -106,12 +112,18 @@ var adjustServerColors = function(number, callback) {
       .selectAll("rect")
       .transition().duration(1000)
       .style("fill", function(d) {
-        if(tcombobox.selection.selectedIndex == 0) {
+        if(tcombobox.selection.selectedIndex == 0) { //cpu
           return (rgcolor(1 + quantize(servers[d].cpu)))
         }
-        else if(tcombobox.selection.selectedIndex == 1) {
+        else if(tcombobox.selection.selectedIndex == 1) { //no. of processes
           return (rgcolor(1 + quantize(servers[d].pnum)))
         }
+		else if(tcombobox.selection.selectedIndex == 2) { //inbound traffic
+		  return rgcolor(1+quantize(servers[d].sread))
+		}
+		else if(tcombobox.selection.selectedIndex == 3) { //outbound traffic
+		  return rgcolor(1+quantize(servers[d].swrite))
+		}
       })
       .attr("class", function(d) {
         return "hoverable"
@@ -196,6 +208,12 @@ function filterServers() {
   else if(combobox.selection.selectedIndex == 3) { //inbound traffic
     var sorted = rects.sort(inboundSort);
   }
+  else if(combobox.selection.selectedIndex == 4) { //outbound traffic
+    var sorted = rects.sort(outboundSort);
+  }
+  else if(combobox.selection.selectedIndex == 5) { //page faults
+    var sorted = rects.sort(pFaultSort);
+  }
   sorted[0].forEach(function(d, i) {
     d3.select(d).transition().duration(1000)
       .attr("transform", function(e) {
@@ -224,9 +242,21 @@ function filterServers() {
     else { return 1; }
   }
   
-  function inboundSort(a,b) {
+  function inboundSort(a, b) {
     if(Number(servers[a].sread) < Number(servers[b].sread)) { return -1; }
     else if(Number(servers[a].sread) == Number(servers[b].sread)) { return 0; }
+    else { return 1; }
+  }
+  
+  function outboundSort(a, b) {
+    if(Number(servers[a].swrite) < Number(servers[b].swrite)) { return -1; }
+    else if(Number(servers[a].swrite) == Number(servers[b].swrite)) { return 0; }
+    else { return 1; }
+  }
+  
+  function pFaultSort(a, b) {
+    if(Number(servers[a].page_faults) < Number(servers[b].page_faults)) { return -1; }
+    else if(Number(servers[a].page_faults) == Number(servers[b].page_faults)) { return 0; }
     else { return 1; }
   }
 }
@@ -243,6 +273,10 @@ function filterSockets() {
         return d3.select(this)[0][0].__data__["Data Received (bytes)"] <= value
           || (!isNaN(value) && value > 0);
       }
+	  else if(socombobox[1].soselection.selecrtedIndex == 2) {
+	    return d3.select(this)[0][0].__data__["Time Open (sec)"] <= value
+		  || (!isNaN(value) && value > 0);
+      }
     })
     .transition().duration(500).attr("opacity", 0).attr("display", "none");
   d3.select("#socket").selectAll("line")
@@ -255,12 +289,12 @@ function filterSockets() {
         return d3.select(this)[0][0].__data__["Data Received (bytes)"] > value
           || (!isNaN(value) && value == 0);
       }
+	  else if(socombobox[1].soselection.selecrtedIndex == 2) {
+	    return d3.select(this)[0][0].__data__["Time Open (sec)"] <= value
+		  || (!isNaN(value) && value > 0);
+      }
     })
-    .transition().duration(500).attr("opacity", 1).attr("display", "inline");;
-}
-
-function changeSocketThreshold() {
-  
+    .transition().duration(500).attr("opacity", 1).attr("display", "inline");
 }
 
 function changeThreshold() {
@@ -268,35 +302,40 @@ function changeThreshold() {
   if(tcombobox.selection.selectedIndex === 0) {
     $(".threshold_slider").slider("option", "max", 100);
     $(".threshold_slider").slider("option", "value", 100);
-    d3.select("#tiles").selectAll("g")
-      .select("text")
-      .transition().duration(500)
-      .style("opacity", 0)
-      .each("end", function(d) {
-        d3.select(this)
-          .text(function(d) {
-            return servers[d].cpu;
-          })
-          .transition().duration(500)
-          .style("opacity", 1)
-      })
   }
   else if(tcombobox.selection.selectedIndex === 1) {
     $(".threshold_slider").slider("option", "max", 500);
     $(".threshold_slider").slider("option", "value", 500);
-    d3.select("#tiles").selectAll("g")
-      .select("text")
-      .transition().duration(500)
-      .style("opacity", 0)
-      .each("end", function(d) {
-        d3.select(this)
-          .text(function(d) {
-            return servers[d].pnum;
-          })
-          .transition().duration(500)
-          .style("opacity", 1)
-      })
   }
+  else if(tcombobox.selection.selectedIndex === 2
+    || tcombobox.selection.selectedIndex === 3) {
+    $(".threshold_slider").slider("option", "max", 1048576);
+    $(".threshold_slider").slider("option", "value", 1048576);
+  }
+  d3.select("#tiles").selectAll("g")
+    .select("text")
+    .transition().duration(500)
+    .style("opacity", 0)
+    .each("end", function(d) {
+	  d3.select(this)
+	    .text(function(d) {
+		  function check(s) {
+		    if(s === null || s.toString().indexOf("null") != -1) {
+			  return "?";
+			}
+			else {
+			  return s;
+			}
+			
+		  }
+		  if(tcombobox.selection.selectedIndex === 0) { return check(servers[d].cpu); }
+		  else if(tcombobox.selection.selectedIndex === 1) { return check(servers[d].pnum); }
+		  else if(tcombobox.selection.selectedIndex === 2) { return check(viewDataSize(servers[d].swrite)); }
+		  else if(tcombobox.selection.selectedIndex === 3) { return check(viewDataSize(servers[d].sread)); }
+	    })
+	    .transition().duration(500)
+	    .style("opacity", 1)
+    })
   transition = false;
 }
 
@@ -343,6 +382,20 @@ function changeProcThreshold() {
   transition = false;
 }
 
+function changeSocketThreshold() {
+  if(socombobox[1].soselection.selectedIndex == 0
+    || socombobox[1].soselection.selectedIndex == 1) {
+    $(".socket_threshold_filter").slider("option", "max", 1048576)
+    $(".socket_threshold_filter").slider("option", "value", 0)
+    $(".socket_threshold_filter").slider("option", "step", 100)
+  }
+  else if(socombobox[1].soselection.selectedIndex == 2) {
+    $(".socket_threshold_filter").slider("option", "max", 100)
+    $(".socket_threshold_filter").slider("option", "value", 0)
+    $(".socket_threshold_filter").slider("option", "step", 1)
+  }
+}
+
 function viewDataSize(num) {
   if(typeof num != "undefined") {
     if(num <= 1024)
@@ -360,6 +413,15 @@ function viewDataSize(num) {
   }
 }
 
+function nullCheck(s) {
+  if(s == null) {
+    return "Unknown";
+  }
+  else {
+    return s;
+  }
+}
+
 function mOverSocket(d) {
   var socketDetails = d3.select("#socket-details");
   socketDetails.select("#socket-status").text("Status: " + d.__data__.Status);
@@ -368,10 +430,10 @@ function mOverSocket(d) {
   socketDetails.select("#socket-sent").text("Data Sent: " + viewDataSize(d.__data__["Data Sent (bytes)"]))
   socketDetails.select("#socket-received").text("Data Received: " + viewDataSize(d.__data__["Data Received (bytes)"]))
   socketDetails.select("#socket-linked").text("Linked to: " + serverLinkMap[d.__data__["Peer IP"]])
+  socketDetails.select("#socket-time").text("Time Open: " + d.__data__["Time Open (sec)"] + " s")
   d3.select("#socket").selectAll("line").transition().duration(300)
     .style("stroke-width", 2).style("stroke", "black");
   d3.select(d).transition().duration(300).style("stroke", "blue").style("stroke-width", 6);
-  
 }
 
 function mOutSocket() {
@@ -385,10 +447,11 @@ function mOutSocket() {
 
 function mOverServer(d, t) {
   $(".tooltip").html("Name: " + d + 
-    "<br>CPU Usage: " + servers[d].cpu + "%" + 
+    "<br>CPU Usage: " + nullCheck(servers[d].cpu) + "%" + 
     "<br>Inbound Traffic: " + viewDataSize(Number(servers[d].sread)) + 
     "<br>Outbound Traffic: " + viewDataSize(Number(servers[d].swrite)) + 
-    "<br>No. of Processes: " + servers[d].pnum)
+    "<br>No. of Processes: " + servers[d].pnum +
+	"<br>Page Faults: " + nullCheck(servers[d].pfault))
   d3.select(".tooltip").transition().duration(200).style("opacity", .9);
   t.select("rect").transition().duration(200).style("stroke-width", 2).style("stroke", "black").style("opacity", .7);
 }
@@ -514,18 +577,32 @@ function zoomIn(d, i) {
     }
   }
   else if(layer == 2) {
-    layer = 3;
+  	layer = 3;
     d3.select("#mainsvg").append("g").attr("id", "socket")
-	console.log(i)
-    $($("#procs g rect")[i]).clone().appendTo("#socket");
+    $(d).clone().appendTo("#socket");
+	$(d).hide();
+	d3.select("#socket").select("g")
+	  .select("text").remove()
     d3.select("#socket").select("rect")
       .attr("class", null)
       .style("stroke", "black")
       .style("stroke-width", 2)
       .transition().duration(1000)
-      .attr("x", 280).attr("y", 280);
+      .attr("transform", function(e) {
+	    var transform = d3.select(d).attr("transform");
+		if(transform != null) {
+	      var arr = transform.substring(transform.indexOf("(") + 1, transform.length - 1).split(",");
+          var posX = 280 - Number(arr[0]) - Number(d3.select(d).select("rect").attr("x"));
+          var posY = 280 - Number(arr[1]) - Number(d3.select(d).select("rect").attr("y"));
+		}
+		else {
+		  var posX = 280 - d3.select(d).select("rect").attr("x");
+		  var posY = 280 - d3.select(d).select("rect").attr("y");
+		}
+        return "translate(" + posX + ","+ posY +")"; 
+      })
     $("#procs").children().fadeOut();
-    showLines(d[0][0].id);
+    showLines(d3.select(d)[0][0].__data__.id);
     d3.select(".backbutton").on("mousedown", null);
     $("#processbells").fadeOut(500, function() {
       d3.select(".backbutton").on("mousedown", function() {
@@ -626,15 +703,15 @@ function zoomOut() {
     $("#socket").remove();
     $("#procs g:hidden").fadeIn(1000);
     d3.select(".backbutton").on("mousedown", null);
-    d3.select("#procs").selectAll(".hoverable").on("click", null)
+    d3.select("#procs").selectAll("g").on("click", null)
     $("#socketbells").fadeOut(500, function() {
       $("#processbells").fadeIn(500);
-      d3.select("#procs").selectAll("g").select("rect").on("click", function(d, i) {
-        zoomIn(d3.select(d), i);
+      d3.select("#procs").selectAll("g").on("click", function(d, i) {
+        zoomIn(this, i);
       })
-        d3.select(".backbutton").on("mousedown", function() {
-          zoomOut();
-        })
+      d3.select(".backbutton").on("mousedown", function() {
+        zoomOut();
+      })
     });
   }
 }
@@ -680,7 +757,6 @@ function createHeatMap(data) {
 function createTiles() {
   var keys = Object.keys(servers);
   var oldx, oldy, thisRect;
-  
   d3.select("body").select("#mainDiv")
     .append("div")
     .attr("id", "appcontainer")
@@ -717,15 +793,16 @@ function createTiles() {
     .attr("height", 40)
     
   d3.select("#tiles").selectAll("g")
-    .append("text").classed("quick-num", true)
-    .text(function(d) {
-      return servers[d].cpu;
-    })
+    .append("text")
     .attr("x", function(d,i) {
       return 20 + 40 * (i%15);
     })
     .attr("y", function(d,i) {
       return 20 + 40 * Math.floor(i/15);
+    })
+	.classed("quick-num", true)
+	.text(function(d) {
+      return servers[d].cpu != null ? servers[d].cpu : "?";
     });
   createToolTip();
 }
@@ -766,7 +843,7 @@ function createTools() {
     })
   );
   d3.select("#bellsnwhistles").append("div").text("Servers").classed("bells-label", true);
-  d3.select("#bellsnwhistles").append("div").text("Ctrl + click to select multiple servers.")
+  d3.select("#bellsnwhistles").append("div").text("Ctrl + Click to select multiple servers.")
     .style("font-style", "italic").style("text-align", "center").style("padding-bottom", "5px")
   d3.select("#processbells").append("div").text("Processes").classed("bells-label", true);
   d3.select("#socketbells").append("div").text("Sockets").classed("bells-label", true);
@@ -793,39 +870,52 @@ function createTools() {
     
     
   var createSocketFilter = function(callback) {
-  
     var options = [ "data sent", "data received", "time open" ];
     var combobox = d3.select("#socketbells").append("div").classed("combobox", true).attr("id", "socombobox");
     combobox.append("div").classed("combolabel", true).text("Threshold: ");
     combobox.append("form").attr("name", "socombobox")
-      .append("select").attr("name", "soselection").attr("size", 1).attr("onChange", "changeSocketThreshold()");
+      .append("select").attr("name", "soselection").attr("size", 1).attr("onchange", "changeSocketThreshold()");
     options.forEach( function(e) {
       d3.select("#socombobox").select("form").select("select")
         .append("option").attr("value", e).text(e);
     });
     d3.select("#socketbells")
       .append("div").attr("id", "socket_threshold_filter")
-    
+    d3.select("#socket_threshold_filter").append("div").text("Heatmap Filter")
+	  .style("text-align", "center").style("padding-right", "15px")
+	  .style("font-weight", "bold");
     d3.select("#socket_threshold_filter")
       .append("div").classed("socket_threshold_filter slider", true)
     $(function() {
       $(".socket_threshold_filter").slider({
         slide: function( event, ui ) {
           d3.select("#socket_filter_value").text( function() {
-            var value = $(".socket_threshold_filter").slider("option", "value");
-            return viewDataSize(value);
+		    var value = $(".socket_threshold_filter").slider("option", "value");
+			if(socombobox[1].soselection.selectedIndex == 0
+			  || socombobox[1].soselection.selectedIndex == 1) {
+              return viewDataSize(value);
+			}
+			else if(socombobox[1].soselection.selectedIndex == 2) {
+			  return value;
+			}
           });
         },
         change: function( event, ui ) { 
           filterSockets(ui.value)
           d3.select("#socket_filter_value").text( function() {
             var value = $(".socket_threshold_filter").slider("option", "value");
-            return viewDataSize(value);  
+			if(socombobox[1].soselection.selectedIndex == 0
+			  || socombobox[1].soselection.selectedIndex == 1) {
+              return viewDataSize(value);
+			}
+			else if(socombobox[1].soselection.selectedIndex == 2) {
+			  return value;
+			}
           });
         },
         step: 100,
         min: 0,
-        max: 102400,
+        max: 1048576,
         value: 0
       });
       if(callback != undefined) {
@@ -938,7 +1028,7 @@ function createTools() {
   var createSlider = function(callback) {
     d3.select("#bellsnwhistles")
       .append("div").attr("id", "threshold_slider");
-    var options = [ "cpu", "no. of processes" ];
+    var options = [ "cpu", "no. of processes", "inbound traffic", "outbound traffic" ];
     var combobox = d3.select("#threshold_slider")
       .append("div").classed("tcombobox", true);
     combobox.append("div").classed("combolabel", true).text("Threshold: ");
@@ -963,9 +1053,13 @@ function createTools() {
             if(tcombobox.selection.selectedIndex == 0) {
               return value + "%";
             }
-            else {
+            else if(tcombobox.selection.selectedIndex == 1) {
               return value;
             }
+			else if(tcombobox.selection.selectedIndex == 2 ||
+			  tcombobox.selection.selectedIndex == 3) {
+			  return viewDataSize(value);
+			}
           });
         },
         change: function( event, ui ) { 
@@ -975,9 +1069,13 @@ function createTools() {
             if(tcombobox.selection.selectedIndex == 0) {
               return value + "%";
             }
-            else {
+            else if(tcombobox.selection.selectedIndex == 1) {
               return value;
-            }        
+            }
+			else if(tcombobox.selection.selectedIndex == 2 ||
+			  tcombobox.selection.selectedIndex == 3) {
+			  return viewDataSize(value);
+			}      
           });
         },
         step: 1,
@@ -994,7 +1092,7 @@ function createTools() {
   
   var createComboBox = function(callback) {
   
-    var options = [ "name", "cpu", "no. of processes", "inbound traffic" ];
+    var options = [ "name", "cpu", "no. of processes", "inbound traffic", "outbound traffic", "page faults" ];
     var combobox = d3.select("#bellsnwhistles").append("div").classed("combobox", true).attr("id", "scombobox");
       combobox.append("div").classed("combolabel", true).text("Sort: ");
       combobox.append("form").attr("name", "combobox")
@@ -1003,6 +1101,9 @@ function createTools() {
         d3.select("#scombobox").select("form").select("select")
           .append("option").attr("value", e).text(e);
       });
+	d3.select("#bellsnwhistles").append("div").text("Selected Servers")
+	  .style("font-weight", "bold").style("text-align", "center")
+	  .style("padding-bottom", "5px")
     if(callback != undefined) {
       callback();
     }
@@ -1035,6 +1136,7 @@ function createTools() {
       socketDetails.append("div").attr("id", "socket-sent").text("Data sent: ");
       socketDetails.append("div").attr("id", "socket-received").text("Data received: ");
       socketDetails.append("div").attr("id", "socket-linked").text("Linked to: ");
+	  socketDetails.append("div").attr("id", "socket-time").text("Time Open: ");
     });
 }
 
@@ -1053,13 +1155,14 @@ function showLines(id) {
         .attr("x1", 300).attr("y1", 300)
         .attr("x2", 300).attr("y2", 300)
         .style("stroke", "black").style("stroke-width", 2)
-        .on("mouseover", function() {
-          mOverSocket(this);
-          
-        })
         .transition().duration(1000)
         .attr("x2", function(d,i) { return 300 + socketRadius * Math.cos(i * 2*Math.PI/numOfLines - Math.PI/2) })
         .attr("y2", function(d,i) { return 300 + socketRadius * Math.sin(i * 2*Math.PI/numOfLines - Math.PI/2) })
+		.each("end", function(d,i) {
+		  d3.select(this).on("mouseover", function() {
+            mOverSocket(this);
+          })
+		})
       }
     }
     queue()
@@ -1094,7 +1197,9 @@ function processes(server) {
       var url = "http://localhost:9000/api/v1/metrics/?name=sys.server." + id + ".process.\*"
       d3.json(url, function(err, data) {
         parsedData = [];
-        data = data["data"][id];
+		if(typeof data !== "undefined") {
+			data = data["data"][id];
+		}
         for(var point in data) {
           for(var d in data[point][0]) {
             parsedData.push({name: data[point][0][d][1], id:d.split(",").join("_"), data:data[point][0][d]});
@@ -1126,7 +1231,7 @@ function processes(server) {
         mOutProcess(d3.select(this));
       })
       .on("click", function(d, i) {
-        zoomIn(d3.select(d), i);
+        zoomIn(this, i);
       })
 	  .on("mousemove", function(d, i) {
 		moveToolTip();

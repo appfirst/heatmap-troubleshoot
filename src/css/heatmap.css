@@ -1,5 +1,5 @@
 body {
-	background: #eee;
+	/* background: #eee; */
 	color: #000000;
 	font-family: "Arial";
 }
@@ -16,6 +16,7 @@ body {
 	font-size: 20px;
 	text-align: center;
 	padding: 10px;
+	margin-bottom: 20px;
 }
 
 #mainDiv {
@@ -24,6 +25,8 @@ body {
 	margin-right: auto ;
 	padding: 10px;
 	overflow: hidden;
+	border: 1px solid black;
+	background: #eee;
 }
 
 .bellsnwhistles {
@@ -191,11 +194,14 @@ svg {
 }
 
 .quick-num {
+	color: black;
 	text-anchor: middle; 
 	font-size: 10px !important;
 	font-weight: normal;
 	font-family: "Courier New";
-	fill: gray !important;
+	max-width: 20px;
+	white-space: wrap;
+	fill: black !important;
 }
 
 .dirty-numbers#server-numbers {
@@ -209,12 +215,6 @@ svg {
 	stroke-width: 1;
 	stroke: gray;
 }
-
-/* .hoverable:hover {
-	fill-opacity: .8;
-	stroke-width: 2;
-	stroke: black;
-} */
 
 .notdefined {
 	stroke-width: 1;
